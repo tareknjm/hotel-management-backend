@@ -9,6 +9,7 @@ import com.hotel.backend.repository.RoomRepository;
 import com.hotel.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,14 +19,15 @@ public class StatsService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)   // ← garde la session ouverte
     public StatsResponse getStats() {
-        long totalChambres     = roomRepository.count();
-        long disponibles       = roomRepository.findByStatut(RoomStatus.DISPONIBLE).size();
-        long occupees          = roomRepository.findByStatut(RoomStatus.OCCUPEE).size();
-        long totalReservations = reservationRepository.count();
-        long enAttente         = reservationRepository.findByStatut(ReservationStatus.EN_ATTENTE).size();
-        long confirmees        = reservationRepository.findByStatut(ReservationStatus.CONFIRMEE).size();
-        long totalClients      = userRepository.findAll()
+        long totalChambres = roomRepository.count();
+        long disponibles   = roomRepository.findByStatut(RoomStatus.DISPONIBLE).size();
+        long occupees      = roomRepository.findByStatut(RoomStatus.OCCUPEE).size();
+        long totalRes      = reservationRepository.count();
+        long enAttente     = reservationRepository.findByStatut(ReservationStatus.EN_ATTENTE).size();
+        long confirmees    = reservationRepository.findByStatut(ReservationStatus.CONFIRMEE).size();
+        long totalClients  = userRepository.findAll()
                 .stream().filter(u -> u.getRole() == Role.CLIENT).count();
 
         double revenu = reservationRepository.findByStatut(ReservationStatus.CONFIRMEE)
@@ -38,7 +40,7 @@ public class StatsService {
 
         return new StatsResponse(
                 totalChambres, disponibles, occupees,
-                totalReservations, enAttente, confirmees,
+                totalRes, enAttente, confirmees,
                 totalClients, revenu
         );
     }
